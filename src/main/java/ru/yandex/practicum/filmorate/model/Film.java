@@ -9,8 +9,8 @@ import java.time.Instant;
  * Film.
  */
 @Data
-@Builder
 @AllArgsConstructor
+@Builder(toBuilder = true)
 public class Film {
     private final Long id;
     private final String name;

@@ -12,7 +12,7 @@ public class FilmController {
     private final Map<Long, Film> films = new HashMap<>();
 
     @GetMapping
-    public Collection<Film> getAll() {
+    public Collection<Film> getFilms() {
         return films.values();
     }
 
