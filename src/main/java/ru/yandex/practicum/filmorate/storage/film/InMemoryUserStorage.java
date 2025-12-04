@@ -10,7 +10,7 @@ public class InMemoryUserStorage implements UserStorage {
     private final Map<Long, User> users = new HashMap<>();
 
     public Collection<User> findAll() {
-        return users.values();
+        return List.copyOf(users.values());
     }
 
     public User create(User user) {

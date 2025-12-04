@@ -40,10 +40,7 @@ public class UserService {
     }
 
     public User update(User user) {
-        User existingUser = userStorage.findById(user.getId())
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с id=%d не найден", user.getId())
-                ));
+        User existingUser = findById(user.getId());
 
         if (!existingUser.getEmail().equals(user.getEmail())) {
             boolean emailExists = userStorage.findAll().stream()
