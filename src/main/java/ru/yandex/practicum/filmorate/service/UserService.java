@@ -28,7 +28,7 @@ public class UserService {
 
         return userStorage.findById(id)
                 .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с id=%d не найден", id)
+                        String.format("Пользователь с id = %d не найден", id)
                 ));
     }
 

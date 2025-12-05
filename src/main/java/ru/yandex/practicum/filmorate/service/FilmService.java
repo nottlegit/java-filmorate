@@ -37,7 +37,7 @@ public class FilmService {
 
         Film findedFilm = filmStorage.findById(id)
                 .orElseThrow(() -> new NotFoundException(
-                        String.format("Фильм с id=%d не найден", id)
+                        String.format("Фильм с id = %d не найден", id)
                 ));
 
         log.info("Фильм успешно получен по id: {}", findedFilm.getId());
