@@ -39,16 +39,20 @@ public class User {
     }
 
     public User addFriend(Long friendId) {
-        Set<Long> updatedFriends = new HashSet<>(this.friends);
+        Set<Long> currentFriends = this.friends != null ? this.friends : new HashSet<>();
+        Set<Long> updatedFriends = new HashSet<>(currentFriends);
         updatedFriends.add(friendId);
+
         return this.toBuilder()
                 .friends(updatedFriends)
                 .build();
     }
 
     public User removeFriend(Long friendId) {
-        Set<Long> updatedFriends = new HashSet<>(this.friends);
+        Set<Long> currentFriends = this.friends != null ? this.friends : new HashSet<>();
+        Set<Long> updatedFriends = new HashSet<>(currentFriends);
         updatedFriends.remove(friendId);
+
         return this.toBuilder()
                 .friends(updatedFriends)
                 .build();

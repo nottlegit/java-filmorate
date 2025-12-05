@@ -76,7 +76,7 @@ public class UserService {
         User user = findById(userId);
         User friend = findById(friendId);
 
-        if (user.getFriends().contains(friendId)) {
+        if (user.getFriends() != null && user.getFriends().contains(friendId)) {
             throw new AlreadyFriendsException(userId, friendId);
         }
 
@@ -102,7 +102,7 @@ public class UserService {
         User user = findById(userId);
         User friend = findById(friendId);
 
-        if (!user.getFriends().contains(friendId)) {
+        if (user.getFriends() != null && !user.getFriends().contains(friendId)) {
             throw new NotFriendsException(userId, friendId);
         }
 
@@ -115,13 +115,19 @@ public class UserService {
     }
 
     public Collection<User> getFriendsByUserId(long id) {
-        return findById(id).getFriends()
-                .stream()
+        User user = findById(id);
+
+        Set<Long> friendIds = user.getFriends();
+        if (friendIds == null) {
+            return Collections.emptyList();  // или new ArrayList<>()
+        }
+
+        return friendIds.stream()
                 .map(friendId -> {
                     try {
                         return findById(friendId);
                     } catch (NotFoundException e) {
-                        throw new InconsistentDataException (id, friendId, e);
+                        throw new InconsistentDataException(id, friendId, e);
                     }
                 })
                 .collect(Collectors.toList());

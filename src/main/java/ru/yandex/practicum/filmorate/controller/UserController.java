@@ -54,7 +54,7 @@ public class UserController {
         userService.addFriend(id, friendId);
     }
 
-    @DeleteMapping("/users/{id}/friends/{friendId}")
+    @DeleteMapping("/{id}/friends/{friendId}")
     public void deleteFriend(@PathVariable long id, @PathVariable long friendId) {
         log.info(
                 "Получен запрос на удаление из друзей: пользователь id = {} удаляет пользователя id = {}",
@@ -63,7 +63,7 @@ public class UserController {
         userService.deleteFriend(id, friendId);
     }
 
-    @GetMapping("/users/{id}/friends")
+    @GetMapping("/{id}/friends")
     public Collection<User> getFriends(@PathVariable long id) {
         log.info("Получен запрос на получение друзей: пользователь id = {}", id);
 
@@ -73,7 +73,7 @@ public class UserController {
         return friends;
     }
 
-    @GetMapping("/users/{id}/friends/common/{otherId}")
+    @GetMapping("/{id}/friends/common/{otherId}")
     public Collection<User> getMutualFriends(@PathVariable long id, @PathVariable long otherId) {
         log.info("Получен запрос на получение общих друзей: пользователь id = {} с пользователем id = {}", id, otherId);
 
