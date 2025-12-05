@@ -143,7 +143,7 @@ public class UserService {
                     try {
                         return findById(friendId);
                     } catch (NotFoundException e) {
-                        throw new InconsistentDataException (user1.getId(), friendId, e);
+                        throw new InconsistentDataException(user1.getId(), friendId, e);
                     }
                 })
                 .collect(Collectors.toList());
