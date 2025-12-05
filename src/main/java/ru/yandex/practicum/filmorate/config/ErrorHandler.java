@@ -7,8 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import ru.yandex.practicum.filmorate.dto.ErrorResponse;
 import ru.yandex.practicum.filmorate.exception.*;
-
-import java.lang.IllegalArgumentException;
+import ru.yandex.practicum.filmorate.exception.IllegalArgumentException;
 
 @RestControllerAdvice
 public class ErrorHandler {
