@@ -8,36 +8,46 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryUserStorage;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class FilmService {
     private final InMemoryFilmStorage filmStorage;
+    private final InMemoryUserStorage userStorage;
 
     public Collection<Film> findAll() {
-        return filmStorage.findAll();
+        Collection<Film> collection = filmStorage.findAll();
+
+        log.info("Успешно получены все фильмы. Текущее количество {}", collection.size());
+        return collection;
     }
 
     public Film findById(long id) {
         if (id < 0) {
-            throw new ValidationException("ID фильма должен быть положительным");
+            String errorMessage = "ID фильма должен быть положительным";
+            log.warn("Ошибка при обновлении фильма: {}", errorMessage);
+            throw new ValidationException(errorMessage);
         }
 
-        return filmStorage.findById(id)
+        Film findedFilm = filmStorage.findById(id)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Фильм с id=%d не найден", id)
                 ));
+
+        log.info("Фильм успешно получен по id: {}", findedFilm.getId());
+        return findedFilm;
     }
 
     public Film create(Film film) {
         Film createdFilm = filmStorage.create(film);
 
-        log.info("Фильм успешно создан: {}", createdFilm);
+        log.info("Фильм успешно добавлен: {}", createdFilm);
         return createdFilm;
     }
 
@@ -57,11 +67,16 @@ public class FilmService {
             throw new ValidationException("ID должен быть положительным");
         }
 
+        User user = userStorage.findById(userId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Пользователь с id=%d не найден, поставить лайк невозможно", userId)
+                ));
+
         Film film = findById(filmId).addLike(userId);
 
         filmStorage.update(film);
 
-        log.info("Пользователь с id = {} успешно поставил лайк фильму с id = {}", userId, filmId);
+        log.info("Пользователь с id = {} успешно поставил лайк фильму с id = {}", user.getId(), film.getId());
     }
 
     public void deleteLike(long filmId, long userId) {
@@ -69,11 +84,16 @@ public class FilmService {
             throw new ValidationException("ID должен быть положительным");
         }
 
+        User user = userStorage.findById(userId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Пользователь с id=%d не найден, поставить лайк невозможно", userId)
+                ));
+
         Film film = findById(filmId).removeLike(userId);
 
         filmStorage.update(film);
 
-        log.info("Пользователь с id = {} успешно удалил лайк фильму с id = {}", userId, filmId);
+        log.info("Пользователь с id = {} успешно удалил лайк фильму с id = {}", user.getId(), film.getId());
     }
 
     public Collection<Film> getPriorityList(int count) {
@@ -82,7 +102,11 @@ public class FilmService {
         }
 
         Collection<Film> filmsPriority = findAll().stream()
-                .sorted(Comparator.comparing((Film film) -> film.getLikes().size()).reversed())
+                //.sorted(Comparator.comparing((Film film) -> film.getLikes().size()).reversed())
+                .sorted(Comparator.comparing((Film film) -> {
+                    Set<Long> likes = film.getLikes();
+                    return likes == null ? 0 : likes.size();
+                }).reversed())
                 .limit(count)
                 .toList();
 

@@ -39,16 +39,20 @@ public class Film {
     }
 
     public Film addLike(Long friendId) {
-        Set<Long> updatedLikes = new HashSet<>(this.likes);
+        Set<Long> currentLikes = this.likes != null ? this.likes : new HashSet<>();
+        Set<Long> updatedLikes = new HashSet<>(currentLikes);
         updatedLikes.add(friendId);
+
         return this.toBuilder()
                 .likes(updatedLikes)
                 .build();
     }
 
     public Film removeLike(Long friendId) {
-        Set<Long> updatedLikes = new HashSet<>(this.likes);
+        Set<Long> currentLikes = this.likes != null ? this.likes : new HashSet<>();
+        Set<Long> updatedLikes = new HashSet<>(currentLikes);
         updatedLikes.remove(friendId);
+
         return this.toBuilder()
                 .likes(updatedLikes)
                 .build();
