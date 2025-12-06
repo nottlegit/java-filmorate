@@ -5,6 +5,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -13,11 +15,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class UserControllerTest {
     private UserController userController;
+    private UserService userService;
+    private InMemoryUserStorage userStorage;
     private User validUser;
 
     @BeforeEach
     void setUp() {
-        userController = new UserController();
+        // Создаем цепочку зависимостей вручную
+        userStorage = new InMemoryUserStorage();
+        userService = new UserService(userStorage);
+        userController = new UserController(userService);
 
         validUser = User.builder()
                 .email("test@yandex.ru")
@@ -73,7 +80,7 @@ class UserControllerTest {
     @Test
     @DisplayName("Пустой список пользователей")
     void testShouldHandleEmptyUserList() {
-        Collection<User> users = userController.getUsers();
+        Collection<User> users = userController.findAll();
 
         assertTrue(users.isEmpty());
     }

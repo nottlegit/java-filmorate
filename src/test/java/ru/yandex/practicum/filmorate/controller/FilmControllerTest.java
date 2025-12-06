@@ -16,15 +16,24 @@ import static org.junit.jupiter.api.Assertions.*;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryUserStorage;
 
 class FilmControllerTest {
     private FilmController filmController;
+    private FilmService filmService;
+    private InMemoryFilmStorage filmStorage;
+    private InMemoryUserStorage userStorage;
     private Film validFilm;
     private Validator validator;
 
     @BeforeEach
     void setUp() {
-        filmController = new FilmController();
+        // Инициализируем зависимости вручную
+        filmStorage = new InMemoryFilmStorage();
+        filmService = new FilmService(filmStorage, userStorage);
+        filmController = new FilmController(filmService);
 
         validFilm = Film.builder()
                 .name("Test Film")
@@ -83,6 +92,7 @@ class FilmControllerTest {
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> filmController.update(nonExistentFilm));
 
+        System.out.println(exception.getMessage());
         assertEquals("Фильм с id = 123 не найден", exception.getMessage());
     }
 
