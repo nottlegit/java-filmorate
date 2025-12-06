@@ -102,7 +102,6 @@ public class FilmService {
         }
 
         Collection<Film> filmsPriority = findAll().stream()
-                //.sorted(Comparator.comparing((Film film) -> film.getLikes().size()).reversed())
                 .sorted(Comparator.comparing((Film film) -> {
                     Set<Long> likes = film.getLikes();
                     return likes == null ? 0 : likes.size();
