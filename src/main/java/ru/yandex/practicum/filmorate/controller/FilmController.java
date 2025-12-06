@@ -56,7 +56,7 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getPriorityList(@RequestParam(required = false, defaultValue = "10") Integer count) {
+    public Collection<Film> getPriorityList(@RequestParam(defaultValue = "10") Integer count) {
         log.info("Получение списка фильмов по количеству лайков: count = {}", count);
         return filmService.getPriorityList(count);
     }
