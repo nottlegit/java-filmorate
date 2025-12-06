@@ -18,14 +18,12 @@ public class FilmController {
     private final FilmService filmService;
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public Collection<Film> getFilms() {
         log.info("Получен запрос на получение всех фильмов.");
         return filmService.findAll();
     }
 
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public Film findById(@PathVariable long id) {
         log.info("Получен запрос на получение фильма по id: {}", id);
         return filmService.findById(id);
@@ -39,14 +37,12 @@ public class FilmController {
     }
 
     @PutMapping
-    @ResponseStatus(HttpStatus.OK)
     public Film update(@Valid @RequestBody Film film) {
         log.info("Получен запрос на обновление фильма: {}", film);
         return filmService.update(film);
     }
 
     @PutMapping("/{id}/like/{userId}")
-    @ResponseStatus(HttpStatus.OK)
     public void addLike(@PathVariable("id") long filmId, @PathVariable long userId) {
         log.info("Добавление лайка: фильм={}, пользователь={}", filmId, userId);
         filmService.addLike(filmId, userId);
@@ -60,7 +56,6 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    @ResponseStatus(HttpStatus.OK)
     public Collection<Film> getPriorityList(@RequestParam(required = false, defaultValue = "10") Integer count) {
         log.info("Получение списка фильмов по количеству лайков: count = {}", count);
         return filmService.getPriorityList(count);
