@@ -15,8 +15,7 @@ import ru.yandex.practicum.filmorate.exception.IllegalArgumentException;
 public class ErrorHandler {
     @ExceptionHandler({
             ValidationException.class,
-            IllegalArgumentException.class,
-            InconsistentDataException.class
+            IllegalArgumentException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleBadRequestExceptions(Exception e) {

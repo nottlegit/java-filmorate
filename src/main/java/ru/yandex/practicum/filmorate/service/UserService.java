@@ -123,13 +123,7 @@ public class UserService {
         }
 
         return friendIds.stream()
-                .map(friendId -> {
-                    try {
-                        return findById(friendId);
-                    } catch (NotFoundException e) {
-                        throw new InconsistentDataException(id, friendId, e);
-                    }
-                })
+                .map(this::findById)
                 .collect(Collectors.toList());
     }
 
@@ -139,13 +133,7 @@ public class UserService {
 
         return user1.getFriends().stream()
                 .filter(user2.getFriends()::contains)
-                .map(friendId -> {
-                    try {
-                        return findById(friendId);
-                    } catch (NotFoundException e) {
-                        throw new InconsistentDataException(user1.getId(), friendId, e);
-                    }
-                })
+                .map(this::findById)
                 .collect(Collectors.toList());
     }
 }
