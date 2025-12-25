@@ -6,17 +6,16 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dal.BaseRepository;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public class UserRepository extends BaseRepository<User> {
-    private static final String FIND_ALL_QUERY = "SELECT * FROM user";
-    private static final String FIND_BY_EMAIL_QUERY = "SELECT * FROM user WHERE email = ?";
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM user WHERE id = ?";
-    private static final String INSERT_QUERY = "INSERT INTO user(login, name, email, birthday)" +
-            "VALUES (?, ?, ?, ?) returning id";
+    private static final String FIND_ALL_QUERY = "SELECT * FROM users";
+    private static final String FIND_BY_EMAIL_QUERY = "SELECT * FROM users WHERE email = ?";
+    private static final String FIND_BY_ID_QUERY = "SELECT * FROM users WHERE id = ?";
+    private static final String INSERT_QUERY = "INSERT INTO users(login, name, email, birthday)" +
+            "VALUES (?, ?, ?, ?)";
     private static final String UPDATE_QUERY = "UPDATE users SET login = ?, name = ?, email = ?," +
             "birthday = ? WHERE id = ?";
 
@@ -45,7 +44,7 @@ public class UserRepository extends BaseRepository<User> {
                 user.getBirthday()
         );
 
-        return  User.builder().id(id).build();
+        return user.toBuilder().id(id).build();
     }
 
     public User update(User user) {
@@ -54,7 +53,8 @@ public class UserRepository extends BaseRepository<User> {
                 user.getLogin(),
                 user.getName(),
                 user.getEmail(),
-                user.getBirthday()
+                user.getBirthday(),
+                user.getId()
         );
         return user;
     }

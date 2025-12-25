@@ -7,8 +7,6 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryUserStorage;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -18,7 +16,7 @@ import java.util.Set;
 @Service
 @AllArgsConstructor
 public class FilmService {
-    private final InMemoryFilmStorage filmStorage;
+    /*private final InMemoryFilmStorage filmStorage;
     private final InMemoryUserStorage userStorage;
 
     public Collection<Film> findAll() {
@@ -111,5 +109,5 @@ public class FilmService {
 
         log.info("Успешно получен список из первых фильмов по количеству лайков размером: {}", filmsPriority.size());
         return filmsPriority;
-    }
+    }*/
 }

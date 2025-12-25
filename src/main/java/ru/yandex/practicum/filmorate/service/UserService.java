@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.user.UserRepository;
 import ru.yandex.practicum.filmorate.dto.user.NewUserRequest;
+import ru.yandex.practicum.filmorate.dto.user.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UserDto;
 import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.exception.IllegalArgumentException;
@@ -20,8 +21,11 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserRepository userRepository;
 
-    public Collection<User> findAll() {
-        return userStorage.findAll();
+    public Collection<UserDto> getUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(UserMapper::mapToUserDto)
+                .collect(Collectors.toList());
     }
 
     public UserDto getUserById(long userId) {
@@ -37,7 +41,7 @@ public class UserService {
     public UserDto createUser(NewUserRequest request) {
         if (request.getEmail() == null || request.getEmail().isEmpty()) {
             throw new ConditionsNotMetException("Имейл должен быть указан");
-        }
+        } // нужно ли это?
 
         Optional<User> alreadyExistUser = userRepository.findByEmail(request.getEmail());
         if (alreadyExistUser.isPresent()) {
@@ -51,30 +55,19 @@ public class UserService {
         return UserMapper.mapToUserDto(user);
     }
 
-    public User update(User user) {
-        User existingUser = findById(user.getId());
+    public UserDto updateUser(UpdateUserRequest request) {
+        // проверить, что нельзя обновить пользователя, если изменилась почта, и она уже кем-то исп.
+        log.info("Обновление пользователя id={}.", request.getId());
 
-        if (!existingUser.getEmail().equals(user.getEmail())) {
-            boolean emailExists = userStorage.findAll().stream()
-                    .anyMatch(u -> u.getEmail().equals(user.getEmail()));
-            if (emailExists) {
-                log.warn(
-                        "Ошибка при обновлении пользователя: email уже используется другим пользователем {}",
-                        user.getEmail()
-                );
-                throw new ValidationException("Email уже используется другим пользователем");
-            }
-        }
-
-        log.info("Обновление пользователя id={}. Старый email: {}, новый email: {}",
-                user.getId(), existingUser.getEmail(), user.getEmail());
-        User updatedUser = userStorage.update(user);
-
-        log.info("Пользователь успешно обновлен: {}", updatedUser);
-        return updatedUser;
+        User updatedUser = userRepository.findById(request.getId())
+                .map(user -> UserMapper.updateUserFields(user, request))
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+        updatedUser = userRepository.update(updatedUser);
+        return UserMapper.mapToUserDto(updatedUser);
     }
+    /// /////////////////////////////////////////////////////////////////////////////
 
-    public void addFriend(long userId, long friendId) {
+    /*public void addFriend(long userId, long friendId) {
         if (userId < 0 || friendId < 0) {
             throw new ValidationException("ID пользователя должен быть положительным");
         }
@@ -85,18 +78,6 @@ public class UserService {
             );
         }
 
-        User user = findById(userId);
-        User friend = findById(friendId);
-
-        if (user.getFriends() != null && user.getFriends().contains(friendId)) {
-            throw new AlreadyFriendsException(userId, friendId);
-        }
-
-        User updatedUser = user.addFriend(friendId);
-        User updatedFriend = friend.addFriend(userId);
-
-        userStorage.update(updatedUser);
-        userStorage.update(updatedFriend);
         log.info("Пользователь {} успешно добавил в друзья {}", userId, friendId);
     }
 
@@ -111,41 +92,15 @@ public class UserService {
             );
         }
 
-        User user = findById(userId);
-        User friend = findById(friendId);
 
-        if (user.getFriends() != null && !user.getFriends().contains(friendId)) {
-            throw new NotFriendsException(userId, friendId);
-        }
-
-        User updatedUser = user.removeFriend(friendId);
-        User updatedFriend = friend.removeFriend(userId);
-
-        userStorage.update(updatedUser);
-        userStorage.update(updatedFriend);
         log.info("Пользователь {} успешно удалил из друзей {}", userId, friendId);
     }
 
     public Collection<User> getFriendsByUserId(long id) {
-        User user = findById(id);
 
-        Set<Long> friendIds = user.getFriends();
-        if (friendIds == null) {
-            return Collections.emptyList();  // или new ArrayList<>()
-        }
-
-        return friendIds.stream()
-                .map(this::findById)
-                .collect(Collectors.toList());
     }
 
     public Collection<User> getMutualFriends(long id, long otherId) {
-        User user1 = findById(id);
-        User user2 = findById(otherId);
 
-        return user1.getFriends().stream()
-                .filter(user2.getFriends()::contains)
-                .map(this::findById)
-                .collect(Collectors.toList());
-    }
+    }*/
 }

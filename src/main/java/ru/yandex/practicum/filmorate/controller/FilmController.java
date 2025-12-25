@@ -15,7 +15,7 @@ import java.util.Collection;
 @RequestMapping("/films")
 @AllArgsConstructor
 public class FilmController {
-    private final FilmService filmService;
+    /*private final FilmService filmService;
 
     @GetMapping
     public Collection<Film> getFilms() {
@@ -59,5 +59,5 @@ public class FilmController {
     public Collection<Film> getPriorityList(@RequestParam(defaultValue = "10") Integer count) {
         log.info("Получение списка фильмов по количеству лайков: count = {}", count);
         return filmService.getPriorityList(count);
-    }
+    }*/
 }

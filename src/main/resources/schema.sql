@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS genre (
 -- ===========================================
 -- 3. ПОЛЬЗОВАТЕЛИ
 -- ===========================================
-CREATE TABLE IF NOT EXISTS user (
+CREATE TABLE IF NOT EXISTS users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     login VARCHAR(100) NOT NULL UNIQUE,
@@ -63,8 +63,8 @@ CREATE TABLE IF NOT EXISTS friendship (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, friend_id),
-    FOREIGN KEY (user_id) REFERENCES user_table(id) ON DELETE CASCADE,
-    FOREIGN KEY (friend_id) REFERENCES user_table(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- ===========================================
@@ -76,6 +76,6 @@ CREATE TABLE IF NOT EXISTS film_like (
     user_id BIGINT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (film_id) REFERENCES film(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES user_table(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE (film_id, user_id)
 );

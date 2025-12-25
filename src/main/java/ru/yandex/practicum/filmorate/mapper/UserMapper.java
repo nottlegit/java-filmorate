@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import ru.yandex.practicum.filmorate.dto.user.NewUserRequest;
+import ru.yandex.practicum.filmorate.dto.user.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UserDto;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -22,22 +23,29 @@ public final class UserMapper {
     public static UserDto mapToUserDto(User user) {
         UserDto dto = new UserDto();
         dto.setId(user.getId());
+        dto.setLogin(user.getLogin());
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         dto.setBirthday(user.getBirthday());
         return dto;
     }
 
-    /*public static User updateUserFields(User user, UpdateUserRequest request) {
+    public static User updateUserFields(User user, UpdateUserRequest request) {
+        User.UserBuilder builder = user.toBuilder();
+
         if (request.hasEmail()) {
-            user.setEmail(request.getEmail());
+            builder.email(request.getEmail());
         }
-        if (request.hasPassword()) {
-            user.setPassword(request.getPassword());
+        if (request.hasLogin()) {
+            builder.login(request.getLogin());
         }
-        if (request.hasUsername()) {
-            user.setUsername(request.getUsername());
+        if (request.hasName()) {
+            builder.name(request.getName());
         }
-        return user;
-    }*/
+        if (request.hasBirthday()) {
+            builder.birthday(request.getBirthday());
+        }
+
+        return builder.build();
+    }
 }
