@@ -31,16 +31,16 @@ public class User {
     @Past(message = "Дата рождения не может быть в будущем")
     private final LocalDate birthday;
 
-    @Builder.Default
-    private final Set<Long> friends = new HashSet<>();
+    //@Builder.Default
+    //private final Set<Long> friends = new HashSet<>();
 
     public String getName() {
         return name != null && !name.trim().isEmpty() ? name : login;
     }
 
-    public User addFriend(Long friendId) {
+    /*public User addFriend(Long friendId) {
         Set<Long> currentFriends = this.friends != null ? this.friends : new HashSet<>();
-        Set<Long> updatedFriends = new HashSet<>(currentFriends);
+       2 Set<Long> updatedFriends = new HashSet<>(currentFriends);
         updatedFriends.add(friendId);
 
         return this.toBuilder()
@@ -56,5 +56,5 @@ public class User {
         return this.toBuilder()
                 .friends(updatedFriends)
                 .build();
-    }
+    }*/
 }

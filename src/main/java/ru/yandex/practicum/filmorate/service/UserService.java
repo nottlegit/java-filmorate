@@ -3,10 +3,13 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.user.UserRepository;
+import ru.yandex.practicum.filmorate.dto.user.NewUserRequest;
+import ru.yandex.practicum.filmorate.dto.user.UserDto;
 import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.exception.IllegalArgumentException;
+import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryUserStorage;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -15,28 +18,37 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor
 public class UserService {
-    private final InMemoryUserStorage userStorage;
+    private final UserRepository userRepository;
 
     public Collection<User> findAll() {
         return userStorage.findAll();
     }
 
-    public User findById(long id) {
-        if (id < 0) {
+    public UserDto getUserById(long userId) {
+        if (userId < 0) {
             throw new ValidationException("ID пользователя должен быть положительным");
         }
 
-        return userStorage.findById(id)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с id = %d не найден", id)
-                ));
+        return userRepository.findById(userId)
+                .map(UserMapper::mapToUserDto)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден с ID: " + userId));
     }
 
-    public User create(User user) {
-        User createdUser = userStorage.create(user);
+    public UserDto createUser(NewUserRequest request) {
+        if (request.getEmail() == null || request.getEmail().isEmpty()) {
+            throw new ConditionsNotMetException("Имейл должен быть указан");
+        }
 
-        log.info("Пользователь успешно создан: {}", createdUser);
-        return createdUser;
+        Optional<User> alreadyExistUser = userRepository.findByEmail(request.getEmail());
+        if (alreadyExistUser.isPresent()) {
+            throw new DuplicatedDataException("Данный имейл уже используется");
+        }
+
+        User user = UserMapper.mapToUser(request);
+
+        user = userRepository.save(user);
+        log.info("Пользователь успешно создан: {}", user);
+        return UserMapper.mapToUserDto(user);
     }
 
     public User update(User user) {

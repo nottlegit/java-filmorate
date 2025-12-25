@@ -19,13 +19,12 @@ CREATE TABLE IF NOT EXISTS genre (
 -- ===========================================
 -- 3. ПОЛЬЗОВАТЕЛИ
 -- ===========================================
-CREATE TABLE IF NOT EXISTS user_table (
+CREATE TABLE IF NOT EXISTS user (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     login VARCHAR(100) NOT NULL UNIQUE,
     name VARCHAR(255),
-    birthday DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    birthday DATE
 );
 
 -- ===========================================
