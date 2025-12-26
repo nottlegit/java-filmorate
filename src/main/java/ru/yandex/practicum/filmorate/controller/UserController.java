@@ -44,7 +44,6 @@ public class UserController {
         log.info("Получен запрос на обновление пользователя: {}", updateUserRequest);
         return userService.updateUser(updateUserRequest);
     }
-    /// /////////////////////////////////////////////////////////
 
     @PutMapping("/{userId}/friends/{friendId}")
     public void addFriend(@PathVariable long userId, @PathVariable long friendId) {

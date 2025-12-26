@@ -84,7 +84,7 @@ public class UserService {
                         String.format("Пользователь с id=%d не найден", friendId)
                 ));
 
-        Optional<Friendship> existingFriendship = friendshipRepository.findByIds(userId, friendId);
+        Optional<Friendship> existingFriendship = friendshipRepository.findByIds(user.getId(), friend.getId());
         if (existingFriendship.isPresent()) {
             throw new IllegalArgumentException(
                     String.format("Пользователь %d уже дружит с пользователем %d", userId, friendId)
@@ -123,13 +123,13 @@ public class UserService {
                 ));
 
         Optional<Friendship> friendshipOptional = friendshipRepository.findByIds(user.getId(), friend.getId());
-        if(friendshipOptional.isEmpty()) {
+        if (friendshipOptional.isEmpty()) {
             return;
         }
 
-        friendshipRepository.deleteByIds(userId, friendId);
-
-        log.info("Пользователь {} успешно удалил из друзей {}", userId, friendId);
+        if(friendshipRepository.deleteByIds(userId, friendId)) {
+            log.info("Пользователь {} успешно удалил из друзей {}", userId, friendId);
+        }
     }
 
     public Collection<UserDto> getFriendsByUserId(long userId) {
