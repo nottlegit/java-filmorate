@@ -3,64 +3,80 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.FilmRepository;
+import ru.yandex.practicum.filmorate.dto.film.FilmDto;
+import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
+import ru.yandex.practicum.filmorate.dto.film.UpdateFilmRequest;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class FilmService {
-    /*private final InMemoryFilmStorage filmStorage;
-    private final InMemoryUserStorage userStorage;
+    private final FilmRepository filmRepository;
 
-    public Collection<Film> findAll() {
-        Collection<Film> collection = filmStorage.findAll();
+    public Collection<FilmDto> getFilms() {
+        Collection<FilmDto> collection = filmRepository.findAll().stream()
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
 
         log.info("Успешно получены все фильмы. Текущее количество {}", collection.size());
         return collection;
     }
 
-    public Film findById(long id) {
-        if (id < 0) {
+    public FilmDto getFilmById(long filmId) {
+        if (filmId < 0) {
             String errorMessage = "ID фильма должен быть положительным";
             log.warn("Ошибка при обновлении фильма: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
 
-        Film findedFilm = filmStorage.findById(id)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Фильм с id = %d не найден", id)
-                ));
+        FilmDto filmDto = filmRepository.findById(filmId)
+                        .map(FilmMapper::mapToFilmDto)
+                        .orElseThrow(() -> new NotFoundException("Фильм не найден с ID: " + filmId));
 
-        log.info("Фильм успешно получен по id: {}", findedFilm.getId());
-        return findedFilm;
+        log.info("Фильм успешно получен по id: {}", filmId);
+        return filmDto;
     }
 
-    public Film create(Film film) {
-        Film createdFilm = filmStorage.create(film);
+    public FilmDto createFilm(NewFilmRequest request) {
+        Film film = FilmMapper.mapToFilm(request);
 
-        log.info("Фильм успешно добавлен: {}", createdFilm);
-        return createdFilm;
+        log.info("{}", film.getMpa());
+
+        if ((film.getMpa().getId() < 1 || film.getMpa().getId() > 5)) {
+            throw new NotFoundException("Id mpa должен быть не больше 5 и больше 0");
+        }
+
+        film = filmRepository.save(film);
+
+        log.info("Фильм успешно добавлен: {}", film);
+        return FilmMapper.mapToFilmDto(film);
     }
 
-    public Film update(Film film) {
-        Film existingFilm = findById(film.getId());
+    public FilmDto updateFilm(UpdateFilmRequest request) {
+        log.info("Обновление фильма id={}", request.getId());
 
-        log.info("Обновление фильма id={}. Дата выхода {}",
-                film.getId(), existingFilm.getReleaseDate());
-        Film updatedFilm = filmStorage.update(film);
+        Film updatedFilm = filmRepository.findById(request.getId())
+                        .map(film -> FilmMapper.updateUserFields(film, request))
+                        .orElseThrow(() -> new NotFoundException("Фильм не найден с ID: " + request.getId()));
 
+        updatedFilm = filmRepository.update(updatedFilm);
         log.info("Фильм успешно обновлен: {}", updatedFilm);
-        return updatedFilm;
+        return FilmMapper.mapToFilmDto(updatedFilm);
     }
 
-    public void addLike(long filmId, long userId) {
+    /*public void addLike(long filmId, long userId) {
         if (userId < 0 || filmId < 0) {
             throw new ValidationException("ID должен быть положительным");
         }

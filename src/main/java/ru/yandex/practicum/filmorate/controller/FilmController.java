@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.film.FilmDto;
+import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
+import ru.yandex.practicum.filmorate.dto.film.UpdateFilmRequest;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -15,34 +18,35 @@ import java.util.Collection;
 @RequestMapping("/films")
 @AllArgsConstructor
 public class FilmController {
-    /*private final FilmService filmService;
+    private final FilmService filmService;
 
     @GetMapping
-    public Collection<Film> getFilms() {
+    public Collection<FilmDto> getFilms() {
         log.info("Получен запрос на получение всех фильмов.");
-        return filmService.findAll();
+        return filmService.getFilms();
     }
 
-    @GetMapping("/{id}")
-    public Film findById(@PathVariable long id) {
-        log.info("Получен запрос на получение фильма по id: {}", id);
-        return filmService.findById(id);
+    @GetMapping("/{filmId}")
+    public FilmDto findById(@PathVariable long filmId) {
+        log.info("Получен запрос на получение фильма по id: {}", filmId);
+        return filmService.getFilmById(filmId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Film create(@Valid @RequestBody Film film) {
-        log.info("Получен запрос на добавление нового фильма: {}", film);
-        return filmService.create(film);
+    public FilmDto create(@Valid @RequestBody NewFilmRequest filmRequest) {
+        log.info("Получен запрос на добавление нового фильма: {}", filmRequest);
+        return filmService.createFilm(filmRequest);
     }
 
     @PutMapping
-    public Film update(@Valid @RequestBody Film film) {
-        log.info("Получен запрос на обновление фильма: {}", film);
-        return filmService.update(film);
+    public FilmDto update(@Valid @RequestBody UpdateFilmRequest updateFilmRequest) {
+        log.info("Получен запрос на обновление фильма: {}", updateFilmRequest);
+        return filmService.updateFilm(updateFilmRequest);
     }
 
-    @PutMapping("/{id}/like/{userId}")
+
+    /*@PutMapping("/{id}/like/{userId}")
     public void addLike(@PathVariable("id") long filmId, @PathVariable long userId) {
         log.info("Добавление лайка: фильм={}, пользователь={}", filmId, userId);
         filmService.addLike(filmId, userId);

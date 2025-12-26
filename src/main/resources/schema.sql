@@ -37,7 +37,6 @@ CREATE TABLE IF NOT EXISTS film (
     release_date DATE NOT NULL,
     duration BIGINT NOT NULL,
     mpa_rating_id BIGINT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (mpa_rating_id) REFERENCES mpa_rating(id)
 );
 

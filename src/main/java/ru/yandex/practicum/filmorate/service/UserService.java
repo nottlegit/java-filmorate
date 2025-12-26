@@ -26,10 +26,12 @@ public class UserService {
     private final FriendshipRepository friendshipRepository;
 
     public Collection<UserDto> getUsers() {
-        return userRepository.findAll()
-                .stream()
-                .map(UserMapper::mapToUserDto)
-                .collect(Collectors.toList());
+        Collection<UserDto> collection = userRepository.findAll().stream()
+                                        .map(UserMapper::mapToUserDto)
+                                        .collect(Collectors.toList());
+
+        log.info("Успешно получены все пользователи. Текущее количество {}", collection.size());
+        return collection;
     }
 
     public UserDto getUserById(long userId) {
@@ -62,6 +64,7 @@ public class UserService {
                 .map(user -> UserMapper.updateUserFields(user, request))
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
         updatedUser = userRepository.update(updatedUser);
+        log.info("Пользователь успешно обновлен: {}", updatedUser);
         return UserMapper.mapToUserDto(updatedUser);
     }
 
