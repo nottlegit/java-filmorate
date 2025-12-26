@@ -8,7 +8,8 @@ public interface Storage<T> {
 
     List<T> findMany(String query, Object... params);
 
-    boolean delete(String query, long id);
+    //boolean delete(String query, long id);
+    boolean delete(String query, Object... params);
 
     void update(String query, Object... params);
 

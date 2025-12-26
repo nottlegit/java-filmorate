@@ -31,8 +31,12 @@ public class BaseRepository<T> implements Storage<T> {
         return jdbc.query(query, mapper, params);
     }
 
-    public boolean delete(String query, long id) {
+    /*public boolean delete(String query, long id) {
         int rowsDeleted = jdbc.update(query, id);
+        return rowsDeleted > 0;
+    }*/
+    public boolean delete(String query, Object... params) {
+        int rowsDeleted = jdbc.update(query, params);
         return rowsDeleted > 0;
     }
 

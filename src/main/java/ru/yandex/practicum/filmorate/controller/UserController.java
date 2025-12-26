@@ -45,15 +45,15 @@ public class UserController {
         return userService.updateUser(updateUserRequest);
     }
     /// /////////////////////////////////////////////////////////
-    /*
-    @PutMapping("/{id}/friends/{friendId}")
-    public void addFriend(@PathVariable long id, @PathVariable long friendId) {
+
+    @PutMapping("/{userId}/friends/{friendId}")
+    public void addFriend(@PathVariable long userId, @PathVariable long friendId) {
         log.info(
                 "Получен запрос на добавление в друзья: пользователь id = {} добавляет пользователя id = {}",
-                id, friendId
+                userId, friendId
         );
 
-        userService.addFriend(id, friendId);
+        userService.addFriend(userId, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
@@ -66,21 +66,21 @@ public class UserController {
     }
 
     @GetMapping("/{id}/friends")
-    public Collection<User> getFriends(@PathVariable long id) {
+    public Collection<UserDto> getFriends(@PathVariable long id) {
         log.info("Получен запрос на получение друзей: пользователь id = {}", id);
 
-        Collection<User> friends = userService.getFriendsByUserId(id);
+        Collection<UserDto> friends = userService.getFriendsByUserId(id);
 
         log.info("Возвращено {} друзей пользователя {}", friends.size(), id);
         return friends;
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public Collection<User> getMutualFriends(@PathVariable long id, @PathVariable long otherId) {
+    public Collection<UserDto> getMutualFriends(@PathVariable long id, @PathVariable long otherId) {
         log.info("Получен запрос на получение общих друзей: пользователь id = {} с пользователем id = {}", id, otherId);
 
-        Collection<User> friends = userService.getMutualFriends(id, otherId);
+        Collection<UserDto> friends = userService.getMutualFriends(id, otherId);
         log.info("Возвращено {} друзей", friends.size());
         return friends;
-    }*/
+    }
 }
