@@ -10,7 +10,13 @@ import java.util.Optional;
 
 @Repository
 public class FilmRepository extends BaseRepository<Film> {
-    private static final String FIND_ALL_QUERY = "SELECT * FROM film";
+    private static final String FIND_ALL_QUERY = """
+            SELECT f.*,\s
+                   m.id AS mpa_id,\s
+                   m.name AS mpa_name
+            FROM film f
+            LEFT JOIN mpa_rating m ON f.mpa_rating_id = m.id
+            """;
     private static final String FIND_BY_ID_QUERY = """
             SELECT f.*,\s
                    m.id AS mpa_id,\s
@@ -18,7 +24,7 @@ public class FilmRepository extends BaseRepository<Film> {
             FROM film f
             LEFT JOIN mpa_rating m ON f.mpa_rating_id = m.id
             WHERE f.id = ?
-            """;//"SELECT * FROM film WHERE id = ?";
+            """;
     private static final String INSERT_QUERY =
             "INSERT INTO film(name, description, release_date, duration, mpa_rating_id) VALUES (?, ?, ?, ?, ?)";
     private static final String UPDATE_QUERY = "UPDATE film SET name = ?, description = ?, release_date = ?," +
