@@ -2,10 +2,10 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.dto.mpa.MpaDto;
 import ru.yandex.practicum.filmorate.service.MpaService;
 
-import java.util.List;
+import java.util.Collection;
 
 @RestController
 @AllArgsConstructor
@@ -15,12 +15,12 @@ public class MpaController {
     private final MpaService mpaService;
 
     @GetMapping
-    public List<Mpa> getAllMpaRatings() {
+    public Collection<MpaDto> getAllMpaRatings() {
         return mpaService.getAllMpaRatings();
     }
 
     @GetMapping("/{id}")
-    public Mpa getMpaRatingById(@PathVariable Long id) {
+    public MpaDto getMpaRatingById(@PathVariable Long id) {
         return mpaService.getMpaRatingById(id);
     }
 }

@@ -6,27 +6,25 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.model.FilmGenre;
-import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.service.GenreFilmsService;
+import ru.yandex.practicum.filmorate.dto.GenreDto;
+import ru.yandex.practicum.filmorate.service.GenreService;
 
 import java.util.Collection;
-import java.util.List;
 
 @Slf4j
 @RestController
 @RequestMapping("/genres")
 @AllArgsConstructor
-public class GenreFilmsController {
-    private final GenreFilmsService genreFilmsService;
+public class GenreController {
+    private final GenreService genreFilmsService;
 
     @GetMapping
-    public Collection<FilmGenre> getAllGenres() {
+    public Collection<GenreDto> getAllGenres() {
         return genreFilmsService.getAllGenres();
     }
 
     @GetMapping("/{id}")
-    public Collection<FilmGenre> getGenresById(@PathVariable Long id) {
+    public GenreDto getGenresById(@PathVariable Long id) {
         return genreFilmsService.getGenresById(id);
     }
 }

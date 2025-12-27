@@ -28,5 +28,4 @@ public class MpaRepository extends BaseRepository<Mpa> {
         log.debug("Поиск MPA рейтинга по ID: {}", id);
         return findOne(FIND_BY_ID_SQL, id);
     }
-
 }
