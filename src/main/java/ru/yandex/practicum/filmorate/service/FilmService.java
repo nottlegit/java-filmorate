@@ -3,7 +3,9 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.FilmLikeRepository;
 import ru.yandex.practicum.filmorate.dal.FilmRepository;
+import ru.yandex.practicum.filmorate.dal.UserRepository;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
 import ru.yandex.practicum.filmorate.dto.film.UpdateFilmRequest;
@@ -11,12 +13,10 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.FilmLike;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class FilmService {
     private final FilmRepository filmRepository;
+    private final UserRepository userRepository;
+    private final FilmLikeRepository filmLikeRepository;
 
     public Collection<FilmDto> getFilms() {
         Collection<FilmDto> collection = filmRepository.findAll().stream()
@@ -52,8 +54,6 @@ public class FilmService {
     public FilmDto createFilm(NewFilmRequest request) {
         Film film = FilmMapper.mapToFilm(request);
 
-        log.info("{}", film.getMpa());
-
         if ((film.getMpa().getId() < 1 || film.getMpa().getId() > 5)) {
             throw new NotFoundException("Id mpa должен быть не больше 5 и больше 0");
         }
@@ -76,21 +76,29 @@ public class FilmService {
         return FilmMapper.mapToFilmDto(updatedFilm);
     }
 
-    /*public void addLike(long filmId, long userId) {
+    public void addLike(long filmId, long userId) {
         if (userId < 0 || filmId < 0) {
             throw new ValidationException("ID должен быть положительным");
         }
 
-        User user = userStorage.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с id=%d не найден, поставить лайк невозможно", userId)
+                        String.format("Пользователь с id=%d не найден", userId)
                 ));
 
-        Film film = findById(filmId).addLike(userId);
+        Film film = filmRepository.findById(filmId).orElseThrow(
+                () -> new NotFoundException("Фильм не найден. Id: " + filmId)
+        );
 
-        filmStorage.update(film);
+        FilmLike filmLike = FilmLike.builder()
+                .filmId(film.getId())
+                .userId(user.getId())
+                .build();
 
-        log.info("Пользователь с id = {} успешно поставил лайк фильму с id = {}", user.getId(), film.getId());
+        filmLike = filmLikeRepository.save(filmLike);
+
+
+        log.info("Пользователь с id = {} успешно поставил лайк фильму с id = {}", filmLike.getId(), filmLike.getId());
     }
 
     public void deleteLike(long filmId, long userId) {
@@ -98,32 +106,43 @@ public class FilmService {
             throw new ValidationException("ID должен быть положительным");
         }
 
-        User user = userStorage.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с id=%d не найден, поставить лайк невозможно", userId)
+                        String.format("Пользователь с id=%d не найден", userId)
                 ));
 
-        Film film = findById(filmId).removeLike(userId);
+        Film film = filmRepository.findById(filmId).orElseThrow(
+                () -> new NotFoundException("Фильм не найден. Id: " + filmId)
+        );
 
-        filmStorage.update(film);
+        FilmLike filmLike = filmLikeRepository.findByFilmIdAndUserId(film.getId(), user.getId()).orElseThrow(
+                () -> new NotFoundException(String.format(
+                        "Лайк фильма с id = %d. И пользователем id = %d не найден",
+                        filmId,
+                        userId
+                ))
+        );
 
-        log.info("Пользователь с id = {} успешно удалил лайк фильму с id = {}", user.getId(), film.getId());
+        if (filmLikeRepository.deleteByFilmIdAndUserId(filmLike)) {
+            log.info("Пользователь с id = {} успешно удалил лайк фильму с id = {}", user.getId(), film.getId());
+        }
     }
 
-    public Collection<Film> getPriorityList(int count) {
-        if (count < 0) {
+    public Collection<FilmDto> getPriorityList(int limit) {
+        if (limit < 0) {
             throw new ValidationException("Count должен быть положительным");
         }
 
-        Collection<Film> filmsPriority = findAll().stream()
-                .sorted(Comparator.comparing((Film film) -> {
-                    Set<Long> likes = film.getLikes();
-                    return likes == null ? 0 : likes.size();
-                }).reversed())
-                .limit(count)
-                .toList();
+        Collection<Long> topFilmIds = filmLikeRepository.findTopFilmsByLikes(limit);
+
+        List<FilmDto> filmsPriority = topFilmIds.stream()
+                .map(filmRepository::findById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
 
         log.info("Успешно получен список из первых фильмов по количеству лайков размером: {}", filmsPriority.size());
         return filmsPriority;
-    }*/
+    }
 }

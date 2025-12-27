@@ -46,7 +46,7 @@ public class FilmController {
     }
 
 
-    /*@PutMapping("/{id}/like/{userId}")
+    @PutMapping("/{id}/like/{userId}")
     public void addLike(@PathVariable("id") long filmId, @PathVariable long userId) {
         log.info("Добавление лайка: фильм={}, пользователь={}", filmId, userId);
         filmService.addLike(filmId, userId);
@@ -60,8 +60,8 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getPriorityList(@RequestParam(defaultValue = "10") Integer count) {
+    public Collection<FilmDto> getPriorityList(@RequestParam(defaultValue = "10") Integer count) {
         log.info("Получение списка фильмов по количеству лайков: count = {}", count);
         return filmService.getPriorityList(count);
-    }*/
+    }
 }
