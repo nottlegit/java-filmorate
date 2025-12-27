@@ -1,9 +1,10 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Film.
@@ -18,6 +19,9 @@ public class Film {
     private final LocalDate releaseDate;
     private final long duration;
     private Mpa mpa;
+
+    @Builder.Default
+    private Set<Genre> genres = new HashSet<>();
 
     public boolean isReleaseDateValid() {
         if (releaseDate == null) return true;

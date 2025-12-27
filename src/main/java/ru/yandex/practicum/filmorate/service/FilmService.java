@@ -3,9 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dal.FilmLikeRepository;
-import ru.yandex.practicum.filmorate.dal.FilmRepository;
-import ru.yandex.practicum.filmorate.dal.UserRepository;
+import ru.yandex.practicum.filmorate.dal.*;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
 import ru.yandex.practicum.filmorate.dto.film.UpdateFilmRequest;
@@ -14,6 +12,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FilmLike;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
@@ -26,6 +25,8 @@ public class FilmService {
     private final FilmRepository filmRepository;
     private final UserRepository userRepository;
     private final FilmLikeRepository filmLikeRepository;
+    private final FilmGenreRepository filmGenreRepository;
+    private final GenreRepository genreRepository;
 
     public Collection<FilmDto> getFilms() {
         Collection<FilmDto> collection = filmRepository.findAll().stream()
@@ -58,7 +59,17 @@ public class FilmService {
             throw new NotFoundException("Id mpa должен быть не больше 5 и больше 0");
         }
 
+        validateGenres(film);
+
         film = filmRepository.save(film);
+
+        final Long savedFilmId = film.getId();
+
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            film.getGenres().forEach(genre ->
+                    filmGenreRepository.save(savedFilmId, genre.getId())
+            );
+        }
 
         log.info("Фильм успешно добавлен: {}", film);
         return FilmMapper.mapToFilmDto(film);
@@ -71,7 +82,17 @@ public class FilmService {
                         .map(film -> FilmMapper.updateUserFields(film, request))
                         .orElseThrow(() -> new NotFoundException("Фильм не найден с ID: " + request.getId()));
 
+        validateGenres(updatedFilm);
+
         updatedFilm = filmRepository.update(updatedFilm);
+
+        final Long updatedFilmId = updatedFilm.getId();
+
+        if (updatedFilm.getGenres() != null && !updatedFilm.getGenres().isEmpty()) {
+            updatedFilm.getGenres().forEach(genre ->
+                    filmGenreRepository.save(updatedFilmId, genre.getId())
+            );
+        }
         log.info("Фильм успешно обновлен: {}", updatedFilm);
         return FilmMapper.mapToFilmDto(updatedFilm);
     }
@@ -144,5 +165,22 @@ public class FilmService {
 
         log.info("Успешно получен список из первых фильмов по количеству лайков размером: {}", filmsPriority.size());
         return filmsPriority;
+    }
+
+     private void validateGenres(Film film) {
+        if (film.getGenres() == null || film.getGenres().isEmpty()) {
+            return;
+        }
+
+        for (Genre genre : film.getGenres()) {
+            if (genre.getId() == null) {
+                throw new ValidationException("ID жанра не может быть null");
+            }
+
+            genreRepository.findById(genre.getId())
+                    .orElseThrow(() -> new NotFoundException(
+                            "Жанр с ID=" + genre.getId() + " не найден"
+                    ));
+        }
     }
 }
