@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.dal.mappers.FilmLikeRowMapper;
 import ru.yandex.practicum.filmorate.model.FilmLike;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
