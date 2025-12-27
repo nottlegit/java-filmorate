@@ -45,8 +45,8 @@ public class FilmService {
         }
 
         FilmDto filmDto = filmRepository.findById(filmId)
-                        .map(FilmMapper::mapToFilmDto)
-                        .orElseThrow(() -> new NotFoundException("Фильм не найден с ID: " + filmId));
+                .map(FilmMapper::mapToFilmDto)
+                .orElseThrow(() -> new NotFoundException("Фильм не найден с ID: " + filmId));
 
         log.info("Фильм успешно получен по id: {}", filmId);
         return filmDto;
@@ -78,23 +78,23 @@ public class FilmService {
     public FilmDto updateFilm(UpdateFilmRequest request) {
         log.info("Обновление фильма id={}", request.getId());
 
-        Film updatedFilm = filmRepository.findById(request.getId())
-                        .map(film -> FilmMapper.updateUserFields(film, request))
-                        .orElseThrow(() -> new NotFoundException("Фильм не найден с ID: " + request.getId()));
+        Film filmFromDb = filmRepository.findById(request.getId())
+                .orElseThrow(() -> new NotFoundException("Фильм не найден с ID: " + request.getId()));
 
+        Film updatedFilm = FilmMapper.updateUserFields(filmFromDb, request);
         validateGenres(updatedFilm);
 
-        updatedFilm = filmRepository.update(updatedFilm);
-
-        final Long updatedFilmId = updatedFilm.getId();
+        filmRepository.update(updatedFilm);
+        filmGenreRepository.deleteByFilmId(updatedFilm.getId());
 
         if (updatedFilm.getGenres() != null && !updatedFilm.getGenres().isEmpty()) {
             updatedFilm.getGenres().forEach(genre ->
-                    filmGenreRepository.save(updatedFilmId, genre.getId())
+                    filmGenreRepository.save(updatedFilm.getId(), genre.getId())
             );
         }
-        log.info("Фильм успешно обновлен: {}", updatedFilm);
-        return FilmMapper.mapToFilmDto(updatedFilm);
+
+        log.info("Фильм успешно обновлен: {}", updatedFilm.getId());
+        return getFilmById(updatedFilm.getId());
     }
 
     public void addLike(long filmId, long userId) {
@@ -167,7 +167,7 @@ public class FilmService {
         return filmsPriority;
     }
 
-     private void validateGenres(Film film) {
+    private void validateGenres(Film film) {
         if (film.getGenres() == null || film.getGenres().isEmpty()) {
             return;
         }

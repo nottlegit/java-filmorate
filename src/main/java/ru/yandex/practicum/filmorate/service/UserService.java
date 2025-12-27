@@ -27,8 +27,8 @@ public class UserService {
 
     public Collection<UserDto> getUsers() {
         Collection<UserDto> collection = userRepository.findAll().stream()
-                                        .map(UserMapper::mapToUserDto)
-                                        .collect(Collectors.toList());
+                .map(UserMapper::mapToUserDto)
+                .collect(Collectors.toList());
 
         log.info("Успешно получены все пользователи. Текущее количество {}", collection.size());
         return collection;
@@ -130,7 +130,7 @@ public class UserService {
             return;
         }
 
-        if(friendshipRepository.deleteByIds(userId, friendId)) {
+        if (friendshipRepository.deleteByIds(userId, friendId)) {
             log.info("Пользователь {} успешно удалил из друзей {}", userId, friendId);
         }
     }

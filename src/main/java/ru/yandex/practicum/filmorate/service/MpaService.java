@@ -7,7 +7,6 @@ import ru.yandex.practicum.filmorate.dal.MpaRepository;
 import ru.yandex.practicum.filmorate.dto.mpa.MpaDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.MpaMapper;
-import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -28,6 +27,7 @@ public class MpaService {
 
     /**
      * Получить MPA рейтинг по ID
+     *
      * @throws NotFoundException если рейтинг не найден
      */
     public MpaDto getMpaRatingById(Long id) {

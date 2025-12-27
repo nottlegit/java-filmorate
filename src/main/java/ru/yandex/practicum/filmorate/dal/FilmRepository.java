@@ -4,7 +4,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,12 +37,18 @@ public class FilmRepository extends BaseRepository<Film> {
         super(jdbc, mapper);
     }
 
-    public List<Film> findAll() {
-        return findMany(FIND_ALL_QUERY);
+    public Collection<Film> findAll() {
+        Collection<Film> films = findMany(FIND_ALL_QUERY);
+
+        films.forEach(this::setGenresForFilm);
+        return films;
     }
 
     public Optional<Film> findById(long filmId) {
-        return findOne(FIND_BY_ID_QUERY, filmId);
+        Optional<Film> filmOptional = findOne(FIND_BY_ID_QUERY, filmId);
+
+        filmOptional.ifPresent(this::setGenresForFilm);
+        return filmOptional;
     }
 
     public Film save(Film film) {
@@ -66,5 +75,21 @@ public class FilmRepository extends BaseRepository<Film> {
                 film.getId()
         );
         return film;
+    }
+
+    private void setGenresForFilm(Film film) {
+        String genresSql = """
+                SELECT g.* FROM genre g
+                JOIN film_genre fg ON g.id = fg.genre_id
+                WHERE fg.film_id = ?
+                ORDER BY g.id
+                """;
+
+        List<Genre> genres = jdbc.query(genresSql, (rs, rowNum) -> Genre.builder()
+                .id(rs.getLong("id"))
+                .name(rs.getString("name"))
+                .build(), film.getId());
+
+        film.setGenres(new LinkedHashSet<>(genres));
     }
 }

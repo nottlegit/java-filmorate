@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.model.FilmGenre;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.List;
 
 @Slf4j
 @Repository
@@ -17,14 +16,14 @@ public class FilmGenreRepository {
     private final JdbcTemplate jdbc;
 
     private static final String INSERT_QUERY = """
-        INSERT INTO film_genre (film_id, genre_id)\s
-        VALUES (?, ?)
-       \s""";
+             INSERT INTO film_genre (film_id, genre_id)\s
+             VALUES (?, ?)
+            \s""";
 
     private static final String FIND_ALL_QUERY = """
-        SELECT * FROM film_genre\s
-        ORDER BY film_id, genre_id
-       \s""";
+             SELECT * FROM film_genre\s
+             ORDER BY film_id, genre_id
+            \s""";
 
     public FilmGenreRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
@@ -48,8 +47,8 @@ public class FilmGenreRepository {
                 .build();
     }
 
-    public List<FilmGenre> findByFilmId(Long filmId) {
-        String query = "SELECT * FROM film_genre WHERE film_id = ? ORDER BY genre_id";
-        return jdbc.query(query, this::mapRowToFilmGenre, filmId);
+    public void deleteByFilmId(long filmId) {
+        String sql = "DELETE FROM film_genre WHERE film_id = ?";
+        jdbc.update(sql, filmId);
     }
 }
