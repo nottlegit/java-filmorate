@@ -3,10 +3,17 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.FriendshipRepository;
+import ru.yandex.practicum.filmorate.dal.UserRepository;
+import ru.yandex.practicum.filmorate.dto.user.NewUserRequest;
+import ru.yandex.practicum.filmorate.dto.user.UpdateUserRequest;
+import ru.yandex.practicum.filmorate.dto.user.UserDto;
 import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.exception.IllegalArgumentException;
+import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.film.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.model.friendship.Friendship;
+import ru.yandex.practicum.filmorate.model.friendship.FriendshipStatus;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -15,77 +22,87 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor
 public class UserService {
-    private final InMemoryUserStorage userStorage;
+    private final UserRepository userRepository;
+    private final FriendshipRepository friendshipRepository;
 
-    public Collection<User> findAll() {
-        return userStorage.findAll();
+    public Collection<UserDto> getUsers() {
+        Collection<UserDto> collection = userRepository.findAll().stream()
+                .map(UserMapper::mapToUserDto)
+                .collect(Collectors.toList());
+
+        log.info("Успешно получены все пользователи. Текущее количество {}", collection.size());
+        return collection;
     }
 
-    public User findById(long id) {
-        if (id < 0) {
+    public UserDto getUserById(long userId) {
+        if (userId < 0) {
             throw new ValidationException("ID пользователя должен быть положительным");
         }
 
-        return userStorage.findById(id)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с id = %d не найден", id)
-                ));
+        return userRepository.findById(userId)
+                .map(UserMapper::mapToUserDto)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден с ID: " + userId));
     }
 
-    public User create(User user) {
-        User createdUser = userStorage.create(user);
-
-        log.info("Пользователь успешно создан: {}", createdUser);
-        return createdUser;
-    }
-
-    public User update(User user) {
-        User existingUser = findById(user.getId());
-
-        if (!existingUser.getEmail().equals(user.getEmail())) {
-            boolean emailExists = userStorage.findAll().stream()
-                    .anyMatch(u -> u.getEmail().equals(user.getEmail()));
-            if (emailExists) {
-                log.warn(
-                        "Ошибка при обновлении пользователя: email уже используется другим пользователем {}",
-                        user.getEmail()
-                );
-                throw new ValidationException("Email уже используется другим пользователем");
-            }
+    public UserDto createUser(NewUserRequest request) {
+        Optional<User> alreadyExistUser = userRepository.findByEmail(request.getEmail());
+        if (alreadyExistUser.isPresent()) {
+            throw new DuplicatedDataException("Данный имейл уже используется");
         }
 
-        log.info("Обновление пользователя id={}. Старый email: {}, новый email: {}",
-                user.getId(), existingUser.getEmail(), user.getEmail());
-        User updatedUser = userStorage.update(user);
+        User user = UserMapper.mapToUser(request);
 
+        user = userRepository.save(user);
+        log.info("Пользователь успешно создан: {}", user);
+        return UserMapper.mapToUserDto(user);
+    }
+
+    public UserDto updateUser(UpdateUserRequest request) {
+        log.info("Обновление пользователя id={}.", request.getId());
+
+        User updatedUser = userRepository.findById(request.getId())
+                .map(user -> UserMapper.updateUserFields(user, request))
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+        updatedUser = userRepository.update(updatedUser);
         log.info("Пользователь успешно обновлен: {}", updatedUser);
-        return updatedUser;
+        return UserMapper.mapToUserDto(updatedUser);
     }
 
     public void addFriend(long userId, long friendId) {
         if (userId < 0 || friendId < 0) {
             throw new ValidationException("ID пользователя должен быть положительным");
         }
-
         if (userId == friendId) {
             throw new IllegalArgumentException(
                     String.format("Пользователь с id=%d не может добавить себя в друзья", userId)
             );
         }
 
-        User user = findById(userId);
-        User friend = findById(friendId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Пользователь с id=%d не найден", userId)
+                ));
+        User friend = userRepository.findById(friendId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Пользователь с id=%d не найден", friendId)
+                ));
 
-        if (user.getFriends() != null && user.getFriends().contains(friendId)) {
-            throw new AlreadyFriendsException(userId, friendId);
+        Optional<Friendship> existingFriendship = friendshipRepository.findByIds(user.getId(), friend.getId());
+        if (existingFriendship.isPresent()) {
+            throw new IllegalArgumentException(
+                    String.format("Пользователь %d уже дружит с пользователем %d", userId, friendId)
+            );
         }
 
-        User updatedUser = user.addFriend(friendId);
-        User updatedFriend = friend.addFriend(userId);
+        Friendship friendship = Friendship.builder()
+                .userId(userId)
+                .friendId(friendId)
+                .status(FriendshipStatus.PENDING)
+                .build();
 
-        userStorage.update(updatedUser);
-        userStorage.update(updatedFriend);
-        log.info("Пользователь {} успешно добавил в друзья {}", userId, friendId);
+        friendship = friendshipRepository.save(friendship);
+
+        log.info("Пользователь {} успешно добавил в друзья {}", friendship.getUserId(), friendship.getFriendId());
     }
 
     public void deleteFriend(long userId, long friendId) {
@@ -99,41 +116,76 @@ public class UserService {
             );
         }
 
-        User user = findById(userId);
-        User friend = findById(friendId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Пользователь с id=%d не найден", userId)
+                ));
+        User friend = userRepository.findById(friendId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Пользователь с id=%d не найден", friendId)
+                ));
 
-        if (user.getFriends() != null && !user.getFriends().contains(friendId)) {
-            throw new NotFriendsException(userId, friendId);
+        Optional<Friendship> friendshipOptional = friendshipRepository.findByIds(user.getId(), friend.getId());
+        if (friendshipOptional.isEmpty()) {
+            return;
         }
 
-        User updatedUser = user.removeFriend(friendId);
-        User updatedFriend = friend.removeFriend(userId);
-
-        userStorage.update(updatedUser);
-        userStorage.update(updatedFriend);
-        log.info("Пользователь {} успешно удалил из друзей {}", userId, friendId);
+        if (friendshipRepository.deleteByIds(userId, friendId)) {
+            log.info("Пользователь {} успешно удалил из друзей {}", userId, friendId);
+        }
     }
 
-    public Collection<User> getFriendsByUserId(long id) {
-        User user = findById(id);
-
-        Set<Long> friendIds = user.getFriends();
-        if (friendIds == null) {
-            return Collections.emptyList();  // или new ArrayList<>()
+    public Collection<UserDto> getFriendsByUserId(long userId) {
+        if (userId < 0) {
+            throw new ValidationException("ID пользователя должен быть положительным");
         }
 
-        return friendIds.stream()
-                .map(this::findById)
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Пользователь с id=%d не найден", userId)
+                ));
+
+        Collection<Friendship> friendships = friendshipRepository.findByUserId(user.getId());
+
+        return friendships.stream()
+                .map(friendship -> userRepository.findById(friendship.getFriendId()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(UserMapper::mapToUserDto)
                 .collect(Collectors.toList());
     }
 
-    public Collection<User> getMutualFriends(long id, long otherId) {
-        User user1 = findById(id);
-        User user2 = findById(otherId);
+    public Collection<UserDto> getMutualFriends(long userId, long otherUserId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Пользователь с id=%d не найден", userId)
+                ));
+        User otherUser = userRepository.findById(otherUserId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Пользователь с id=%d не найден", otherUserId)
+                ));
 
-        return user1.getFriends().stream()
-                .filter(user2.getFriends()::contains)
-                .map(this::findById)
+        List<Long> userFriendIds = friendshipRepository.findByUserId(user.getId()).stream()
+                .map(Friendship::getFriendId)
+                .toList();
+
+        List<Long> otherUserFriendIds = friendshipRepository.findByUserId(otherUser.getId()).stream()
+                .map(Friendship::getFriendId)
+                .toList();
+
+        List<Long> mutualFriendIds = userFriendIds.stream()
+                .filter(otherUserFriendIds::contains)
+                .toList();
+
+        if (mutualFriendIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return mutualFriendIds.stream()
+                .map(userRepository::findById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(UserMapper::mapToUserDto)
                 .collect(Collectors.toList());
     }
 }
