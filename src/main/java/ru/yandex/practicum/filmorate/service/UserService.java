@@ -64,11 +64,14 @@ public class UserService {
             throw new IllegalArgumentException("Нельзя добавить самого себя в друзья");
         }
 
-        userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found: " + userId));
-        userRepository.findById(friendId).orElseThrow(() -> new NotFoundException("Friend not found: " + friendId));
+        userRepository.findById(userId).orElseThrow(
+                () -> new NotFoundException(String.format("Пользователь с id=%d не найден", userId)));
+        userRepository.findById(friendId).orElseThrow(
+                () -> new NotFoundException(String.format("Пользователь с id=%d не найден", friendId)));
 
         if (friendshipRepository.findByIds(userId, friendId).isPresent()) {
-            throw new IllegalArgumentException("Вы уже друзья");
+            throw new IllegalArgumentException(String.format("Пользователь с id %d уже дружит в пользователем id %d",
+                    userId, friendId));
         }
 
         friendshipRepository.save(Friendship.builder()
@@ -79,8 +82,12 @@ public class UserService {
     }
 
     public void deleteFriend(long userId, long friendId) {
-        userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
-        userRepository.findById(friendId).orElseThrow(() -> new NotFoundException("Friend not found"));
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(
+                String.format("Пользователь с id=%d не найден", userId
+        )));
+        userRepository.findById(friendId).orElseThrow(() -> new NotFoundException(
+                String.format("Пользователь с id=%d не найден", friendId
+        )));
         friendshipRepository.deleteByIds(userId, friendId);
     }
 
@@ -97,8 +104,12 @@ public class UserService {
     }
 
     public Collection<UserDto> getMutualFriends(long userId, long otherUserId) {
-        userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
-        userRepository.findById(otherUserId).orElseThrow(() -> new NotFoundException("Other user not found"));
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException(
+                String.format("Пользователь с id=%d не найден", userId)
+        ));
+        userRepository.findById(otherUserId).orElseThrow(() -> new NotFoundException(
+                String.format("Пользователь с id=%d не найден", otherUserId)
+        ));
 
         Set<Long> userFriends = friendshipRepository.findByUserId(userId).stream()
                 .map(Friendship::getFriendId)
