@@ -37,7 +37,7 @@ public class FilmRepository extends BaseRepository<Film> {
         film.ifPresent(f -> loadGenresForFilms(List.of(f)));
         return film;
     }
-    
+
     public List<Film> findByIds(Collection<Long> ids) {
         if (ids.isEmpty()) return Collections.emptyList();
         String inSql = ids.stream().map(String::valueOf).collect(Collectors.joining(","));
@@ -63,12 +63,12 @@ public class FilmRepository extends BaseRepository<Film> {
         String inSql = filmIds.stream().map(String::valueOf).collect(Collectors.joining(","));
 
         String genresSql = """
-            SELECT fg.film_id, g.id AS genre_id, g.name AS genre_name
-            FROM genre g
-            JOIN film_genre fg ON g.id = fg.genre_id
-            WHERE fg.film_id IN (%s)
-            ORDER BY g.id
-            """.formatted(inSql);
+                SELECT fg.film_id, g.id AS genre_id, g.name AS genre_name
+                FROM genre g
+                JOIN film_genre fg ON g.id = fg.genre_id
+                WHERE fg.film_id IN (%s)
+                ORDER BY g.id
+                """.formatted(inSql);
 
         Map<Long, List<Genre>> genresByFilmId = jdbc.query(genresSql, rs -> {
             Map<Long, List<Genre>> result = new HashMap<>();
