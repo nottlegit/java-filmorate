@@ -39,6 +39,7 @@ public class FilmGenreRepository {
                 ps.setLong(1, filmId);
                 ps.setLong(2, genreList.get(i).getId());
             }
+
             @Override
             public int getBatchSize() {
                 return genreList.size();
