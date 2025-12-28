@@ -1,3 +1,4 @@
+
 package ru.yandex.practicum.filmorate.dal;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -5,8 +6,11 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.User;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 public class UserRepository extends BaseRepository<User> {
@@ -32,6 +36,16 @@ public class UserRepository extends BaseRepository<User> {
 
     public Optional<User> findById(long userId) {
         return findOne(FIND_BY_ID_QUERY, userId);
+    }
+
+    public List<User> findByIds(Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        String inSql = ids.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        return findMany(String.format("SELECT * FROM users WHERE id IN (%s)", inSql));
     }
 
     public User save(User user) {
