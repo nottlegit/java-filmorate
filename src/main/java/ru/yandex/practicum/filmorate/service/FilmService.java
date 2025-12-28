@@ -10,10 +10,7 @@ import ru.yandex.practicum.filmorate.dto.film.UpdateFilmRequest;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmLike;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,7 +37,7 @@ public class FilmService {
     public FilmDto getFilmById(long filmId) {
         if (filmId < 0) {
             String errorMessage = "ID фильма должен быть положительным";
-            log.warn("Ошибка при обновлении фильма: {}", errorMessage);
+            log.warn("Ошибка: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
 
@@ -63,16 +60,12 @@ public class FilmService {
 
         film = filmRepository.save(film);
 
-        final Long savedFilmId = film.getId();
-
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
-            film.getGenres().forEach(genre ->
-                    filmGenreRepository.save(savedFilmId, genre.getId())
-            );
+            filmGenreRepository.batchSave(film.getId(), film.getGenres());
         }
 
         log.info("Фильм успешно добавлен: {}", film);
-        return FilmMapper.mapToFilmDto(film);
+        return getFilmById(film.getId());
     }
 
     public FilmDto updateFilm(UpdateFilmRequest request) {
@@ -85,12 +78,10 @@ public class FilmService {
         validateGenres(updatedFilm);
 
         filmRepository.update(updatedFilm);
-        filmGenreRepository.deleteByFilmId(updatedFilm.getId());
 
+        filmGenreRepository.deleteByFilmId(updatedFilm.getId());
         if (updatedFilm.getGenres() != null && !updatedFilm.getGenres().isEmpty()) {
-            updatedFilm.getGenres().forEach(genre ->
-                    filmGenreRepository.save(updatedFilm.getId(), genre.getId())
-            );
+            filmGenreRepository.batchSave(updatedFilm.getId(), updatedFilm.getGenres());
         }
 
         log.info("Фильм успешно обновлен: {}", updatedFilm.getId());
@@ -103,23 +94,18 @@ public class FilmService {
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с id=%d не найден", userId)
-                ));
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден: " + userId));
 
-        Film film = filmRepository.findById(filmId).orElseThrow(
-                () -> new NotFoundException("Фильм не найден. Id: " + filmId)
-        );
+        Film film = filmRepository.findById(filmId)
+                .orElseThrow(() -> new NotFoundException("Фильм не найден: " + filmId));
 
         FilmLike filmLike = FilmLike.builder()
                 .filmId(film.getId())
                 .userId(user.getId())
                 .build();
 
-        filmLike = filmLikeRepository.save(filmLike);
-
-
-        log.info("Пользователь с id = {} успешно поставил лайк фильму с id = {}", filmLike.getId(), filmLike.getId());
+        filmLikeRepository.save(filmLike);
+        log.info("Пользователь {} поставил лайк фильму {}", userId, filmId);
     }
 
     public void deleteLike(long filmId, long userId) {
@@ -127,44 +113,27 @@ public class FilmService {
             throw new ValidationException("ID должен быть положительным");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Пользователь с id=%d не найден", userId)
-                ));
-
-        Film film = filmRepository.findById(filmId).orElseThrow(
-                () -> new NotFoundException("Фильм не найден. Id: " + filmId)
-        );
-
-        FilmLike filmLike = filmLikeRepository.findByFilmIdAndUserId(film.getId(), user.getId()).orElseThrow(
-                () -> new NotFoundException(String.format(
-                        "Лайк фильма с id = %d. И пользователем id = %d не найден",
-                        filmId,
-                        userId
-                ))
-        );
+        FilmLike filmLike = filmLikeRepository.findByFilmIdAndUserId(filmId, userId)
+                .orElseThrow(() -> new NotFoundException("Лайк не найден"));
 
         if (filmLikeRepository.deleteByFilmIdAndUserId(filmLike)) {
-            log.info("Пользователь с id = {} успешно удалил лайк фильму с id = {}", user.getId(), film.getId());
+            log.info("Пользователь {} удалил лайк у фильма {}", userId, filmId);
         }
     }
 
     public Collection<FilmDto> getPriorityList(int limit) {
         if (limit < 0) {
-            throw new ValidationException("Count должен быть положительным");
+            throw new ValidationException("Limit должен быть положительным");
         }
 
-        Collection<Long> topFilmIds = filmLikeRepository.findTopFilmsByLikes(limit);
+        List<Long> topFilmIds = new ArrayList<>(filmLikeRepository.findTopFilmsByLikes(limit));
 
-        List<FilmDto> filmsPriority = topFilmIds.stream()
-                .map(filmRepository::findById)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+        List<Film> films = filmRepository.findByIds(topFilmIds);
+
+        return films.stream()
+                .sorted(Comparator.comparingInt(film -> topFilmIds.indexOf(film.getId())))
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
-
-        log.info("Успешно получен список из первых фильмов по количеству лайков размером: {}", filmsPriority.size());
-        return filmsPriority;
     }
 
     private void validateGenres(Film film) {
@@ -176,11 +145,8 @@ public class FilmService {
             if (genre.getId() == null) {
                 throw new ValidationException("ID жанра не может быть null");
             }
-
             genreRepository.findById(genre.getId())
-                    .orElseThrow(() -> new NotFoundException(
-                            "Жанр с ID=" + genre.getId() + " не найден"
-                    ));
+                    .orElseThrow(() -> new NotFoundException("Жанр с ID=" + genre.getId() + " не найден"));
         }
     }
 }
