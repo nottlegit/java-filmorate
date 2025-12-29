@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Repository
@@ -32,19 +33,12 @@ public class FilmGenreRepository {
     public void batchSave(long filmId, Collection<Genre> genres) {
         if (genres == null || genres.isEmpty()) return;
 
-        List<Genre> genreList = new ArrayList<>(genres);
-        jdbc.batchUpdate(INSERT_QUERY, new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
-            @Override
-            public void setValues(java.sql.PreparedStatement ps, int i) throws java.sql.SQLException {
-                ps.setLong(1, filmId);
-                ps.setLong(2, genreList.get(i).getId());
-            }
+        List<Object[]> batchArgs = genres.stream()
+                .map(genre -> new Object[]{filmId, genre.getId()})
+                .collect(Collectors.toList());
 
-            @Override
-            public int getBatchSize() {
-                return genreList.size();
-            }
-        });
+        jdbc.batchUpdate(INSERT_QUERY, batchArgs);
+
         log.debug("Сохранены жанры для фильма {}", filmId);
     }
 
