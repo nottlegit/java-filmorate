@@ -1,0 +1,16 @@
+package ru.yandex.practicum.filmorate.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
+public class FilmLike {
+    private Long id;
+    private Long filmId;
+    private Long userId;
+}
